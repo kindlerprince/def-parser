@@ -1,0 +1,51 @@
+%{
+	#include<iostream>
+	#include<string>
+	#include<map>
+	#include<cstdlib>      //to use atoi function
+	using namespace std;
+
+	int yylex();
+	int yyerror(const char *p){cout << "Error" <<endl;}
+%}
+
+%union{
+  int val;
+	char c;
+	char *str;
+};
+
+%token <val> NUM PT
+%token <c> OP
+%token <str> FILLS RECT POLYGON VIA OPC END LAYER
+%type <str> a b c d
+
+
+%%
+
+run   : a run | a
+a     : FILLS NUM b c d
+        |FILLS NUM b c
+        |FILLS NUM b d
+        |FILLS NUM c d
+        |FILLS NUM b
+        |FILLS NUM d
+        |FILLS NUM c
+        |END FILLS a
+        ;
+
+b     : LAYER NUM OP OPC
+c     : RECT PT PT c
+        |POLYGON  PT PT c
+
+d     : VIA NUM OP OPC PT d
+        |a
+
+
+
+%%
+int main()
+{
+	yyparse();
+	return 0;
+}

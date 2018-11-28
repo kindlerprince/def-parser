@@ -1,0 +1,47 @@
+%{
+	#include<iostream>
+	#include<string>
+	#include<map>
+	#include<cstdlib>     //to use atoi function
+	using namespace std;
+
+	int yylex();
+	int yyerror(const char *p){cout << "Error" <<endl;}
+%}
+
+%union{
+  int val;
+	char *str;
+};
+
+%token <val> NUM PT
+%token <str> SLOTS RECT POLYGON OPC LAYER END
+%type <str> a b c
+
+
+%%
+
+run   : a run | a
+a     : SLOTS NUM a b c
+        |SLOTS NUM b c
+        |SLOTS NUM a b
+        |SLOTS NUM a c
+        |SLOTS NUM a
+        |SLOTS NUM b
+        |SLOTS NUM c
+        |END SLOTS
+        ;
+
+b     : LAYER NUM
+c     : RECT PT PT c
+        |POLYGON  PT PT c
+        |a
+
+
+
+%%
+int main()
+{
+	yyparse();
+	return 0;
+}
