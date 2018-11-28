@@ -1,0 +1,49 @@
+%{
+	#include<iostream>
+	#include<string>
+	#include<map>
+	#include<cstdlib>      //to use atoi function
+	using namespace std;
+
+	int yylex();
+	int yyerror(const char *p){cout << "Error" <<endl;}
+%}
+
+%union{
+  int val;
+	char *str;
+};
+
+%token <val> NUM
+%token <str> GROUPS REGION PROPERTY END 
+%type <str> a b c d
+
+
+%%
+
+run   : a run | a
+a     : GROUPS NUM b c d
+        |GROUPS NUM b c
+        |GROUPS NUM b d
+        |GROUPS NUM c d
+        |GROUPS NUM b
+        |GROUPS NUM d
+        |GROUPS NUM c
+        |GROUPS NUM
+        |END GROUPS a
+        ;
+
+b     : NUM NUM
+c     : REGION NUM
+
+d     : PROPERTY NUM
+        |a
+
+
+
+%%
+int main()
+{
+	yyparse();
+	return 0;
+}
