@@ -1,0 +1,103 @@
+
+%{ /*** C/C++ Declarations ***/
+
+#include <string>
+
+#include "DefScanner.h"
+typedef DefParser::Parser::token token;
+typedef DefParser::Parser::token_type token_type;
+#define yyterminate() return token::END
+#define YY_NO_UNISTD_H
+
+%}
+
+/*** Flex Declarations and Options ***/
+%option c++
+%option prefix="DefParser"
+
+%option batch
+%option debug
+%option yywrap nounput 
+%option stack
+
+%{
+#define YY_USER_ACTION  yylloc->columns(yyleng);
+%}
+
+%% 
+%{
+    // reset location
+    yylloc->step();
+%}
+
+
+"COMPONENTS" {
+	return token::KWD_COMPONENTS;
+}
+
+
+[\+\-]?[0-9]+ {
+    yylval->integerVal = atoi(yytext);
+    return token::INTEGER;
+}
+
+[\+\-]?[0-9]+"."[0-9]* {
+    yylval->doubleVal = atof(yytext);
+    return token::DOUBLE;
+}
+
+[0-9]*\'[A-Za-z][0-9]+ {
+    yylval->stringVal = new std::string(yytext, yyleng);
+    return token::BINARY;
+}
+[A-Za-z_]([A-Za-z0-9_,.\-\[\]\/\*]|([\\][\(\)]))* {
+    yylval->stringVal = new std::string(yytext, yyleng);
+    return token::STRING;
+}
+\"([^"])*\" {
+    yylval->quoteVal = new std::string(yytext+1, yyleng-2);
+    return token::QUOTE;
+}
+"#"([^\n])* {
+    yylloc->step();
+}
+[ \t\r]+ {
+    yylloc->step();
+}
+\n {
+    yylloc->lines(yyleng); yylloc->step();
+    /* return token::EOL; */
+}
+. {
+    return static_cast<token_type>(*yytext);
+}
+
+namespace DefParser {
+Scanner::Scanner(std::istream* in,
+		 std::ostream* out)
+    : DefParserFlexLexer(in, out)
+{
+}
+Scanner::~Scanner()
+{
+}
+void Scanner::set_debug(bool b)
+{
+    yy_flex_debug = b;
+}
+}
+
+#ifdef yylex
+#undef yylex
+#endif
+
+int DefParserFlexLexer::yylex()
+{
+    std::cerr << "in DefParserFlexLexer::yylex() !" << std::endl;
+    return 0;
+}
+
+int DefParserFlexLexer::yywrap()
+{
+    return 1;
+}

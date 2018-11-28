@@ -1,0 +1,148 @@
+%{ /*** C/C++ Declarations ***/
+
+#include <stdio.h>
+#include <string>
+#include <vector>
+
+/*#include "expression.h"*/
+
+%}
+
+/*** yacc/bison Declarations ***/
+%debug
+/* start symbol is named "start" */
+%start start
+%defines
+%skeleton "lalr1.cc"
+%name-prefix="DefParser"
+%define "parser_class_name" "Parser"
+%locations
+%initial-action
+{
+    // initialize the initial location object
+    @$.begin.filename = @$.end.filename = &driver.streamname;
+};
+
+%parse-param { class Driver& driver }
+
+/* verbose error messages */
+%error-verbose
+%union {
+    int  			integerVal;
+    double 			doubleVal;
+    std::string*		stringVal;
+	std::string*		quoteVal;
+	std::string*		binaryVal;
+
+/*	class IntegerArray* integerArrayVal;*/
+	class StringArray* stringArrayVal;
+}
+
+%token			END	     0	"end of file"
+/* %token			EOL		"end of line" */
+%token <integerVal> 	INTEGER		"integer"
+%token <doubleVal> 	DOUBLE		"double"
+%token <stringVal> 	STRING		"string"
+%token <quoteVal> 	QUOTE		"quoted chars"
+%token <binaryVal> 	BINARY		"binary numbers"
+/*%type <integerArrayVal> integer_array */
+%type <stringArrayVal> string_array
+
+%token			KWD_COMPONENTS	"COMPONENTS"
+
+/*
+%type <integerVal>	block_other block_row block_comp block_pin block_net 
+%type <integerVal>	expression 
+*/
+
+%destructor { delete $$; } STRING QUOTE BINARY
+%destructor { delete $$; } /*integer_array*/ string_array 
+/*
+%destructor { delete $$; } constant variable
+%destructor { delete $$; } atomexpr powexpr unaryexpr mulexpr addexpr expr
+*/
+%{
+
+#include "DefDriver.h"
+#include "DefScanner.h"
+#undef yylex
+#define yylex driver.lexer->lex
+
+%}
+
+%% /*** Grammar Rules ***/
+
+/*
+integer_array : INTEGER {
+				$$ = new IntegerArray(1, $1);
+			  }
+			  | integer_array INTEGER {
+				$1->push_back($2);
+				$$ = $1;
+			  }
+*/
+string_array : STRING {
+				$$ = new StringArray(1, *$1);
+                delete $1;
+			  }
+			  | string_array STRING {
+				$1->push_back(*$2);
+                delete $2;
+				$$ = $1;
+			  }
+
+
+ /*** grammar for components ***/
+begin_components : KWD_COMPONENTS INTEGER ';' {
+					driver.component_cbk_size($2);
+				 }
+
+end_components : KWD_END KWD_COMPONENTS 
+			   ;
+
+component_addon : /* empty */
+				| component_addon '+' STRING '(' INTEGER INTEGER ')' STRING {
+					driver.component_cbk_position(*$3, $5, $6, *$8);
+                    delete $3;
+                    delete $8;
+				}
+				| component_addon '+' STRING '(' DOUBLE DOUBLE ')' STRING { /*it may be double in some benchmarks*/
+					driver.component_cbk_position(*$3, $5, $6, *$8);
+                    delete $3; 
+                    delete $8;
+				}
+				| component_addon '+' KWD_SOURCE STRING {
+					driver.component_cbk_source(*$4);
+                    delete $4;
+				}
+				| component_addon '+' STRING {
+					driver.component_cbk_position(*$3);
+                    delete $3;
+				}
+				;
+
+single_component : '-' STRING STRING component_addon ';' {
+				driver.component_cbk(*$2, *$3);
+                delete $2;
+                delete $3;
+			}
+
+multiple_components : single_component 
+				  | multiple_components single_component
+			  ;
+
+block_components : begin_components 
+				 multiple_components 
+				 end_components
+				 | begin_components
+				 end_components
+				 ;
+				 
+
+%% /*** Additional Code ***/
+
+void DefParser::Parser::error(const Parser::location_type& l,
+			    const std::string& m)
+{
+    driver.error(l, m);
+}
