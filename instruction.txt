@@ -1,0 +1,10 @@
+How to upload your code(for linux):
+1. check if git is installed or not by using this command "git --version", if you get a version then git is installed.
+2. clone the above repository using "git clone https://github.com/HITK-Compiler/def-parser.git"
+3. get inside the directory, "cd def-parser"
+4. create a new branch with the name of the feature or part which you have written the code for using "git checkout -b yourFeatureName"
+5. Find the location of your local copy of repository using "pwd" command, copy your code inside this folder using terminal or file manager.
+6. do "git add *" to add all files to staging area.
+(Note: if you have a fresh git installation then git will ask you to configure your email id and user name, do so by using the commands displayed on screen)
+7. add commit message with your team-mates name (make sure that they are registered on github using the same email address that you have added in the message) using -> git commit -a -m"explain in brief the feature you have implemented Co-authored-by: name <name@example.com> Co-authored-by: name <name@example.com>"
+8. "git push -u origin yourFeatureName"
