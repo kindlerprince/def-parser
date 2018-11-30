@@ -1,0 +1,69 @@
+%{
+	#include<iostream>
+	#include<string>
+	#include<map>
+	#include<cstdlib>      //to use atoi function
+	using namespace std;
+
+	int yylex();
+	int yyerror(const char *p){cout << "Error: "<<p<<endl;}
+	extern FILE *yyin;
+%}
+
+%union{
+	int val;
+	char *str;
+	char op;
+};
+
+%token	<val>	NUM
+%token	<str>	GROUPS REGION PROPERTY END ID COMP
+%token	<op>	PLUS MINUS LBRACKET RBRACKET STOP
+%type	<str>	start  comp
+%type	<op>	reg grp groupName prop prval
+
+%%
+
+run		: start run
+		| start
+		;
+start	:GROUPS NUM STOP groupName END GROUPS	{cout <<$$<<endl;}
+
+groupName
+		: grp reg prop STOP groupName
+		| grp reg prop STOP
+		;
+
+grp		:MINUS ID comp
+		;
+
+comp	: COMP comp
+		| COMP
+		;
+
+reg		: PLUS REGION ID
+		;
+
+prop	: PLUS PROPERTY	prval prop
+		| PLUS PROPERTY	prval
+		;
+
+prval	: LBRACKET ID ID RBRACKET prval
+		| LBRACKET ID ID RBRACKET
+		;
+
+
+%%
+int main()
+{
+	FILE *myfile;
+	myfile=fopen("input.txt","r");
+	if(!myfile)
+	{
+		cout<<"FILE NOT FOUND!!"<<endl;
+		exit(1);
+	}
+	yyin=myfile;
+	yyparse();
+	return 0;
+}

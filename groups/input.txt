@@ -1,0 +1,6 @@
+GROUPS 4;
+	- firstgroup FIRST
+	+ REGION	firstregion
+	+ PROPERTY (firstprop firstval) (secondprop secondval)
+	;
+END GROUPS
